@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block page_content %}
+Hello,
+{% if name %}
+    {{ name }},
+    {% if password %}
+           Your password is :{{ password }}
+    {% endif %}
+{% else %}
+    Stronger
+{% endif %}
+<br/><br/><br/>
+{% import 'bootstrap/wtf.html' as wtf %}
+{{ wtf.quick_form(form) }}
+{% endblock %}

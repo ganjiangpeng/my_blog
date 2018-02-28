@@ -1,3 +1,11 @@
 {% extends 'base.html' %}
 {% import 'macros.html' as macros %}
-{% block title %} My Index {% endblock %}
+{% block title %} Gan - {{ name }} {% endblock %}
+{% block page_content %}
+Hello,
+{% if name %}
+{{ name }}
+{% else %}
+Stronger.
+{% endif %}
+{% endblock %}
