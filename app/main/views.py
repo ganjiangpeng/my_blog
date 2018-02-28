@@ -2,7 +2,7 @@ from . import main
 from flask import render_template
 @main.route('/')
 def index():
-    return 'index pager1'
+    return render_template('index.html')
 
 
 @main.route('/user/<name>')
