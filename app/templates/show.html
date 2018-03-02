@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+
+{% for u in user %}
+{{ u.id }}---{{ u.username }} {{ u.role.name }}<br/>
+{% endfor %}
+
+Role :{{ role.name }} has {{ role.count() }} users
+{% endblock %}

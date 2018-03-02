@@ -20,6 +20,7 @@ class DevelopmentConfig(Config):
     MAIL_USE_TLS = False
     MAIL_USERNAME = 'ganjiangpeng@163.com'
     MAIL_PASSWORD = '123456'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:123456@localhost/myblog'
 
 class TestingConfig(Config):
     TESTING = True
