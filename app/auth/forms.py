@@ -25,3 +25,9 @@ class LoginForm(Form):
     password = PasswordField('Password',validators=[DataRequired()])
     remeber_me = BooleanField('Keep me logged in')
     submit = SubmitField('Log in')
+
+class ChangePasswordForm(Form):
+    old_password = StringField('Old Password',validators=[DataRequired()])
+    new_password = StringField('New Password',validators=[DataRequired()])
+    confirm_password = StringField('Confirm Password',validators=[DataRequired()])
+    submit = SubmitField('Submit')

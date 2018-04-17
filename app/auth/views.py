@@ -2,7 +2,7 @@
 from flask import render_template,session,redirect,url_for,flash,request
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth
-from .forms import RegisterForm,LoginForm
+from .forms import RegisterForm,LoginForm,ChangePasswordForm
 from ..models import User,Role
 from .. import db
 from flask_login import login_user,logout_user,login_required,current_user
@@ -75,6 +75,19 @@ def resend_confirmation():
     return redirect(url_for("main.index"))
 
 
+@auth.route('/change_password',methods=["POST",'GET'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if current_user.verify_password(form.old_password.data):
+            current_user.password = form.new_password.data
+            db.session.add(current_user)
+            flash("Your password has been updated.")
+            return redirect(url_for("main.index"))
+        else:
+            flash("Invalid password.")
+    return render_template("auth/change_password.html",form=form)
 
 
 
