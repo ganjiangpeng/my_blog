@@ -27,7 +27,7 @@ class LoginForm(Form):
     submit = SubmitField('Log in')
 
 class ChangePasswordForm(Form):
-    old_password = StringField('Old Password',validators=[DataRequired()])
-    new_password = StringField('New Password',validators=[DataRequired()])
-    confirm_password = StringField('Confirm Password',validators=[DataRequired()])
+    old_password = PasswordField('Old Password',validators=[DataRequired()])
+    new_password = PasswordField('New Password',validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password',validators=[DataRequired()])
     submit = SubmitField('Submit')
