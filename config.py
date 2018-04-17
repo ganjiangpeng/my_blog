@@ -6,7 +6,7 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     FLASK_MAIL_SUBJECT = '[Gan]'
-    FLASK_MAIL_SENDER = 'Gan Admin <ganjiangpeng@163.com>'
+    FLASK_MAIL_SENDER = 'Gan Admin <343683840@qq.com>'
 
     @staticmethod
     def init_app(app):
@@ -15,11 +15,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    MAIL_SERVER = 'smtp.163.com'
-    MAIL_PORT = 25
+    MAIL_SERVER = 'smtp.qq.com'
+    MAIL_PORT = 465
+    MAIL_USE_SSL = True
     MAIL_USE_TLS = False
-    MAIL_USERNAME = 'ganjiangpeng@163.com'
-    MAIL_PASSWORD = '123456'
+    MAIL_USERNAME = '343683840@qq.com'
+    MAIL_PASSWORD = 'yjqegvataafnbhjf'
     SQLALCHEMY_DATABASE_URI = 'mysql://root:123456@localhost/myblog'
 
 class TestingConfig(Config):
