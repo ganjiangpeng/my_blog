@@ -2,11 +2,12 @@
 from flask import render_template,session,redirect,url_for,flash,request
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth
-from .forms import RegisterForm,LoginForm,ChangePasswordForm
-from ..models import User,Role
+from .forms import RegisterForm,LoginForm,ChangePasswordForm,PasswordResetForm,PasswordResetRequestForm,TestForm
+from ..models import User,Role,Permission
 from .. import db
 from flask_login import login_user,logout_user,login_required,current_user
 from ..mail import send_email
+from ..decorators import permission_required,admin_required
 
 @auth.before_app_request
 def befor_request():
@@ -24,6 +25,9 @@ def unconfirmed():
 
 @auth.route('/register',methods=['POST','GET'])
 def register():
+    if not current_user.is_anonymous:
+        flash('You are old man.')
+        return redirect(url_for('main.index'))
     form = RegisterForm()
     if form.validate_on_submit():
         user = User(username=form.username.data,
@@ -41,6 +45,8 @@ def register():
 
 @auth.route('/login',methods=['POST','GET'])
 def login():
+    if not current_user.is_anonymous:
+        return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -89,10 +95,38 @@ def change_password():
             flash("Invalid password.")
     return render_template("auth/change_password.html",form=form)
 
+@auth.route('/reset',methods=['POST','GET'])
+def reset_password_request():
+    #if current_user.is_anonymous:
+    #    return redirect(url_for("main.index"))
+    form = PasswordResetRequestForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = user.generate_reset_token()
+            send_email(user.email,'Reset Your Password',
+                       'auth/email/reset_password',
+                       token=token,user=user,
+                       next=request.args.get('next'))
+        flash('An Email with instructions to reset your password has been sent to you.')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/reset_password.html',form=form)
 
-
-
-
+@auth.route('/reset/<token>',methods=['POST','GET'])
+def password_reset(token):
+    if not current_user.is_anonymous:
+        return redirect(url_for('main.index'))
+    form = PasswordResetForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is None:
+            return redirect(url_for('main.index'))
+        if user.reset_password(token,form.password.data):
+            flash('Your password has been updated.')
+            return redirect(url_for('auth.login'))
+        else:
+            return redirect(url_for('main.index'))
+    return render_template('auth/reset_password.html',form=form)
 
 
 
@@ -122,3 +156,24 @@ def test1():
     u = User()
     u.password = 'cat'
     return  '%s' %u.verify_password('cat')
+
+@auth.route('/test_role')
+def add_role():
+    return current_user.role.name
+@auth.route('/test_decorator')
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
+def test_decorator():
+    return 'must be admin to see this!'
+
+@auth.route('/test_p')
+def test_p():
+    current_user.ping()
+    return 'time is sync'
+
+@auth.route('/test_form',methods=['POST','GET'])
+def test_form():
+    form = TestForm()
+    if form.validate_on_submit():
+        return "%s" %form.test.data
+    return render_template('test.html',form=form)

@@ -2,12 +2,12 @@
 {% block title %} Home {% endblock %}
 {% block page_content %}
 {% if current_user.is_authenticated %}
-<h1>Hello,{{ current_user.username }}</h1>
+<h1>Hello,{{ current_user.name }}</h1>
 {% else %}
     <h1>Hello,Stroger</h1>
 {% endif %}
 <br/>
-<a href="{{ url_for('main.users',name='god') }}"/> To User page </a><br/>
+<a href="{{ url_for('main.user',username=current_user.username) }}"/> To User page </a><br/>
 <img src="{{ url_for('static',filename='xx.jpg',_external=True)}}" /><br/>
 <p>The local date and time is : {{ moment(current_time).format('LLL') }}</p>
 <p>That was : {{ moment(current_time).fromNow(refresh=True) }}</p>
