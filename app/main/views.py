@@ -39,6 +39,7 @@ def edit_profile():
 @login_required
 @admin_required
 def edit_profile_admin(id):
+    return '123'
     user = User.query.get_or_404(id)
     form = EditProfileAdminForm(user=user)
     if form.validate_on_submit():
@@ -60,9 +61,7 @@ def edit_profile_admin(id):
     form.about_me.data = user.about_me
     return render_template('edit_profile.html',form=form,user=user)
 
-
 @main.route('/test/<int:id>')
-#@permission_required(Permission.ADMINISTER)
 @admin_required
 def test(id):
     return "123"
