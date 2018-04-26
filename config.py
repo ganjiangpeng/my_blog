@@ -7,6 +7,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     FLASK_MAIL_SUBJECT = '[Gan]'
     FLASK_MAIL_SENDER = 'Gan Admin <gjp0115@126.com>'
+    FLASK_ADMIN = 'gjp0115@126.com'
 
     @staticmethod
     def init_app(app):

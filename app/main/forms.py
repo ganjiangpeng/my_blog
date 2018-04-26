@@ -3,6 +3,7 @@ from flask_wtf import Form
 from wtforms import SubmitField,StringField,PasswordField,TextAreaField,BooleanField,SelectField
 from wtforms.validators import DataRequired,Length,Email,Regexp,ValidationError
 from ..models import Role,User
+from flask_pagedown.fields import PageDownField
 
 #普通用户修改信息表单
 class EditProfileForm(Form):
@@ -39,4 +40,15 @@ class EditProfileAdminForm(Form):
         if field.data != self.user.username and \
             User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already regisered.')
+
+class PostForm(Form):
+    body = PageDownField("what's on your mind?",validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class CommentForm(Form):
+    body = StringField('',validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
 

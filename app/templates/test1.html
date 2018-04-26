@@ -4,7 +4,7 @@
 {% block title %}Myblog - tet{% endblock %}
 
 {% block page_content %}
-{% for u in users %}
-{{ u.id }}--{{ u.username }} <br/>
+{% for p in posts %}
+{{ p.id }}--{{ p.body }} <br/>
 {% endfor %}
 {% endblock %}

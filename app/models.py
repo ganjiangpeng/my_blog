@@ -3,8 +3,9 @@ from . import db,login_manager
 from werkzeug.security import generate_password_hash,check_password_hash
 from flask_login import UserMixin,AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask import current_app
+from flask import current_app,request
 from datetime import datetime
+import hashlib
 #flask_login回调函数
 @login_manager.user_loader
 def load_user(user_id):
@@ -51,6 +52,11 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role %r>' % self.name
 
+# 关联者模型
+class Follow(db.Model):
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 #用户模型
 class User(UserMixin,db.Model):
@@ -69,6 +75,21 @@ class User(UserMixin,db.Model):
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(),default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(),default=datetime.utcnow)
+    avatar_hash = db.Column(db.String(32))
+    posts = db.relationship('Post',backref='author',lazy='dynamic')
+    followed = db.relationship('Follow',
+                              foreign_keys=[Follow.follower_id],
+                              backref=db.backref('follower',lazy='joined'),
+                              lazy='dynamic',
+                              cascade='all,delete-orphan')
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.followed_id],
+                                backref = db.backref('followed',lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all,delete-orphan')
+
+    comments = db.relationship('Comment',backref='author',lazy="dynamic")
+    replys = db.relationship('Reply',backref='author',lazy="dynamic")
 
     #密码加密
     @property
@@ -121,6 +142,8 @@ class User(UserMixin,db.Model):
                 self.role = Role.query.filter_by(permissions=0xff).first()
             else:
                 self.role = Role.query.filter_by(default=True).first()
+        if self.email is not None  and self.avatar_hash is None:
+            self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
     #角色权限判断，用给定的权限与自己的权限，判断是否有相应权限
     def can(self,permissions):
         return self.role is not None and \
@@ -134,6 +157,68 @@ class User(UserMixin,db.Model):
         db.session.add(self)
     def __repr__(self):
         return '<User %r>' % self.username
+    #生成头像连接
+    def gravatar(self,size=100,default='identicon',rating='g'):
+        if request.is_secure:
+            url = 'https://secure.gravatar.com/avatar'
+        else:
+            url = 'http://secure.gravatar.com/avatar'
+        hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+        return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
+            url=url,hash=hash,size=size,default=default,rating=rating)
+
+    #关注
+    def follow(self,user):
+        if not self.is_following(user):
+            f = Follow(follower=self,followed=user)
+            db.session.add(f)
+    #取消关注
+    def unfollow(self,user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+    #是否已关注user
+    def is_following(self,user):
+        return self.followed.filter_by(followed_id=user.id).first() is not None
+
+    #是否被user关注
+    def is_followed_by(self,user):
+        return self.followers.filter_by(follower_id=user.id).first() is not None
+
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id) \
+            .filter(Follow.follower_id == self.id)
+
+
+#文章模型
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer,primary_key=True)
+    body = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+    author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+    comments = db.relationship('Comment',backref='post',lazy='dynamic')
+
+class Comment(db.Model):
+    __tablename__="comments"
+    id = db.Column(db.Integer,primary_key=True)
+    author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+    body = db.Column(db.Text)
+    post_id = db.Column(db.Integer,db.ForeignKey('posts.id'))
+    disabled = db.Column(db.Boolean)
+    timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+    replys = db.relationship('Reply',backref='comment',lazy='dynamic')
+
+class Reply(db.Model):
+    __tablename__ = "replys"
+    id = db.Column(db.Integer,primary_key=True)
+    pids = db.Column(db.String,index=True)
+    body = db.Column(db.Text)
+    author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+    comment_id = db.Column(db.Integer,db.ForeignKey('comments.id'))
+    timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+
 
 
 class AnonymousUser(AnonymousUserMixin):
