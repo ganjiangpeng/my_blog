@@ -1,5 +1,6 @@
 <ul class="posts">
     {% for comment in comments %}
+    {% if comment.disabled %}
     <li class="post">
         <div class="post-thumbnail">
             <a href="{{ url_for('.user',username=comment.author.username) }}">
@@ -17,17 +18,46 @@
             <div class="post-body">{{ comment.body|safe }}</div>
 
             <div class="post-footer">
-                {% if current_user == comment.author %}
-                    <a href="{{ url_for('.edit',id=comment.id) }}">
-                        <span class="label label-primary">Edit</span>
+                {% if current_user.can(Permission.COMMENT) %}
+                    <a href="{{url_for('.disable_comment',id=comment.id) }}">
+                              <span class="label label-danger">Disable</span>
                     </a>
-                {% elif current_user.is_administrator() %}
-                    <a href="{{ url_for('.edit',id=comment.id) }}">
-                        <span class="label label-danger">Edit[Admin]</span>
+                    <a href="{{ url_for('.reply',comment_id=comment.id,post_id=comment.post_id,is_reply='') }}">
+                        <span class="label label-primary">回复</span>
                     </a>
                 {% endif %}
             </div>
         </div>
+        <div class="post-content">
+        {% for reply in comment.replys %}
+            {% if reply.disabled %}
+            <div class="post-thumbnail">
+                <a href="{{ url_for('.user',username=reply.author.username) }}">
+                    <img class="img-rounded profile-thumbnail"
+                        src="{{ reply.author.gravatar(size=20) }}">
+                </a>
+            </div>
+            <div class="post-body">{{ reply.body|safe }}</div>
+            {% if current_user.can(Permission.MODERATE_COMMENTS)%}
+                <div>
+                    <a href="{{ url_for('.disable',id=reply.id) }}">
+                        <span class="label label-danger">Disable</span>
+                    </a>
+                </div>
+            {% endif %}
+
+
+            {% if current_user.can(Permission.COMMENT) %}
+                <div class="post-footer">
+                    <a href="{{ url_for('.reply',comment_id=comment.id,reply_id=reply.id,post_id=comment.post_id,is_reply='1') }}">
+                        <spa class="label label-default">回复</spa>
+                    </a>
+                </div>
+            {% endif %}
+            {% endif %}
+        {% endfor %}
+        </div>
     </li>
+    {% endif %}
     {% endfor %}
 </ul>

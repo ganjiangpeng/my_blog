@@ -218,6 +218,7 @@ class Reply(db.Model):
     author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
     comment_id = db.Column(db.Integer,db.ForeignKey('comments.id'))
     timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+    disabled = db.Column(db.Boolean,default=True)
 
 
 

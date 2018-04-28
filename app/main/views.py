@@ -3,7 +3,7 @@ from . import main
 from flask import render_template,abort,flash,redirect,url_for,request,make_response
 from datetime import datetime
 from ..models import User,Role,Permission,Post,Follow,Comment,Reply
-from forms import EditProfileForm,EditProfileAdminForm,PostForm,CommentForm
+from forms import EditProfileForm,EditProfileAdminForm,PostForm,CommentForm,ReplyForm
 from flask_login import current_user,login_required
 from ..import db
 from ..decorators import permission_required,admin_required
@@ -195,11 +195,44 @@ def show_followed():
     return resp
 
 
+@main.route('/reply/<int:comment_id>',methods=['POST','GET'])
+@login_required
+@permission_required(Permission.COMMENT)
+def reply(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    form = ReplyForm()
+    reply_id = request.args.get('reply_id')
+    is_reply = bool(request.args.get('is_reply'))
+    if form.validate_on_submit():
+        if not  is_reply:
+            pids = ""
+        else:
+            result = Reply.query.with_entities(Reply.pids).filter_by(id=reply_id).first()
+            pids = str(result[0]) + ':' + str(reply_id)
+        reply = Reply(body = form.body.data,
+                      author = current_user._get_current_object(),
+                      comment = comment,
+                      pids=pids)
+        db.session.add(reply)
+        return redirect(url_for('.post',id=comment.post_id))
+    return render_template('post.html',form=form)
 
 
 
 
 
+@main.route('/disable/<int:id>')
+def disable(id):
+    pass
+
+@main.route('/enable/<int:id>')
+def enable(id):
+    pass
+
+
+@main.route('/disable-comment/<int:id>')
+def disable_comment(id):
+    pass
 
 
 
@@ -214,6 +247,14 @@ def test():
 @main.route('/test1')
 @login_required
 def test1():
+    post = Post.query.get_or_404(3)
+    comments = post.comments.order_by(Comment.timestamp.asc()).all()
+    return render_template('test.html',comments=comments,post=post)
+
     posts = Post.query.join(Follow,Follow.followed_id == Post.author_id).\
         filter(Follow.follower_id==current_user.id).all()
     return render_template('test1.html',posts=posts)
+@main.route('/test2')
+def test2():
+    result = Reply.query.with_entities(Reply.pids).filter_by(id=15).first()
+    return "%s" %type(result)

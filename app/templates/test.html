@@ -4,7 +4,10 @@
 {% block title %}Myblog - tet{% endblock %}
 
 {% block page_content %}
-{% for u in users %}
-{{ u.id }}--{{ u.username }} <br/>
+{% for comment in comments %}
+    这是评论：{{ comment.body }}<br/>
+    {% for reply in comment.replys %}
+        这是评论的回复：{{ reply.id }},{{ reply.body }}<br/>
+     {% endfor %}
 {% endfor %}
 {% endblock %}

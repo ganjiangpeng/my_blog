@@ -51,4 +51,7 @@ class CommentForm(Form):
     submit = SubmitField('Submit')
 
 
+class ReplyForm(Form):
+    body = StringField('',validators=[DataRequired()])
+    submit = SubmitField('Submit')
 
