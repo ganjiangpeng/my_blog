@@ -1,5 +1,5 @@
 #coding:utf-8
-from flask import render_template,session,redirect,url_for,flash,request
+from flask import render_template,session,redirect,url_for,flash,request,abort
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth
 from .forms import RegisterForm,LoginForm,ChangePasswordForm,PasswordResetForm,PasswordResetRequestForm,TestForm
@@ -177,3 +177,9 @@ def test_form():
     if form.validate_on_submit():
         return "%s" %form.test.data
     return render_template('test.html',form=form)
+
+
+@auth.route('/editor')
+def editor():
+    return render_template('editor.html')
+

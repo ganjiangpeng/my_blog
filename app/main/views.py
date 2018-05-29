@@ -258,3 +258,16 @@ def test1():
 def test2():
     result = Reply.query.with_entities(Reply.pids).filter_by(id=15).first()
     return "%s" %type(result)
+
+
+
+@main.route('/upload/',methods=['GET','POST'])
+def upload():
+    pass
+
+
+
+@main.route('/aaaa')
+def aaaa():
+    action = request.files
+    return  '%s' %action
