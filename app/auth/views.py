@@ -1,5 +1,5 @@
 #coding:utf-8
-from flask import render_template,session,redirect,url_for,flash,request,abort
+from flask import render_template,session,redirect,url_for,flash,request,abort,current_app,make_response
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth
 from .forms import RegisterForm,LoginForm,ChangePasswordForm,PasswordResetForm,PasswordResetRequestForm,TestForm
@@ -8,6 +8,11 @@ from .. import db
 from flask_login import login_user,logout_user,login_required,current_user
 from ..mail import send_email
 from ..decorators import permission_required,admin_required
+import os
+import json
+import re
+import time
+from random import random
 
 @auth.before_app_request
 def befor_request():
@@ -179,7 +184,102 @@ def test_form():
     return render_template('test.html',form=form)
 
 
-@auth.route('/editor')
-def editor():
+@auth.route('/uploads/',methods=['POST','GET'])
+def uploads():
+    if request.method == 'POST':
+        content = request.form['content'].encode('utf-8')
+        filename = os.path.join(current_app.static_folder,'test.txt')
+        with open(filename,'w+') as f:
+            f.write(content)
+            return "%s" %content
     return render_template('editor.html')
+@auth.route('/upload/',methods=['POST','GET','OPTIONS'])
+def upload():
 
+    action = request.args.get('action')
+    with open(os.path.join(current_app.static_folder,'ueditor','php','config.json')) as f:
+        try:
+            CONFIG=json.loads(re.sub(r'\/\*.*\*\/','',f.read()))
+        except:
+            CONFIG={}
+    if action == 'config':
+        result= json.dumps(CONFIG)
+
+
+    if action == "uploadimage":
+        fieldName = CONFIG.get('imageFieldName')
+        config = {
+            "pathFormat": CONFIG['imagePathFormat'],
+            "maxSize": CONFIG['imageMaxSize'],
+            "allowFiles": CONFIG['imageAllowFiles']
+        }
+        _format = config['pathFormat']
+        _format = _format.replace('{yyyy}','2018')
+        _format = _format.replace('{mm}','05')
+        _format = _format.replace('{dd}', '31')
+        _format = _format.replace('{time}', '15')
+        _format = _format.replace('{rand:6}',str(int(time.time()))+str(int(random()*1000)))
+        fullName='%s%s'%(_format,'.jpg')
+        filePath=""
+        for path in fullName.split('/'):
+            filePath=os.path.join(filePath,path)
+        filename = os.path.join(current_app.static_folder,filePath)
+        request.files[fieldName].save(filename)
+        result = {
+            'state': 'SUCCESS',
+            'url': url_for('static', filename=fullName, _external=True),
+            'title': 'ok',
+            'original': 'ok',
+            'type': 'ok',
+            'size': 'ok',
+            }
+        res = make_response(json.dumps(result))
+        res.mimetype = 'application/javascript'
+        res.headers['Access-Control-Allow-Origin'] = '*'
+        res.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,X_Requested_With'
+        return res
+
+
+    res = make_response(result)
+    res.mimetype = 'application/javascript'
+    res.headers['Access-Control-Allow-Origin'] = '*'
+    res.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,X_Requested_With'
+    return res
+
+
+@auth.route('/weditor')
+def weditor():
+    return render_template('weditor.html')
+
+
+@auth.route('/uploadimage',methods=['POST','GET'])
+def uploadimage():
+    f = request.files['image']
+    filename = f.filename
+    filepath = 'd:/my_blog/app/static/' + str(filename)
+    try:
+        f.save(filepath)
+        state=0
+        return json.dumps({
+            'errno':state,
+            'data':url_for('static',filename=filename,_external=True)
+        })
+    except:
+        state=1
+
+    result={
+        'state':123
+    }
+    res=make_response(json.dumps(result))
+    res.mimetype = 'application/javascript'
+    res.headers['Access-Control-Allow-Origin'] = '*'
+    res.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,X_Requested_With'
+    return res
+
+@auth.route('/showpage')
+def showpage():
+    filename = os.path.join(current_app.static_folder,'test.txt')
+    with open(filename) as f:
+        contents = f.read()
+    res = make_response(contents)
+    return res
